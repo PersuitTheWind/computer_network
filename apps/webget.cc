@@ -17,16 +17,7 @@ void get_URL( const string& host, const string& path )
   request += "Connection: close\r\n";
   request += "\r\n";
   socket.write(request);
-  //response = socket.recv(4096);
   string req;
- /* while (true) {
-      try {
-        socket.read(req);
-      }
-      catch(const exception& e){std::cerr<< "Read error:" << e.what() << std::endl;}
-     // req[x] = '\0';
-      cout << req;
-  }*/
   while(!socket.eof()){
     socket.read(req);
     cout << req;
