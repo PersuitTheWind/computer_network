@@ -27,8 +27,11 @@ void get_URL( const string& host, const string& path )
      // req[x] = '\0';
       cout << req;
   }*/
-  socket.read(req);
-  cout << req;
+  while(!socket.eof()){
+    socket.read(req);
+    cout << req;
+  }
+  socket.close();
   cerr << "Function called: get_URL(" << host << ", " << path << ")\n";
   cerr << "Warning: get_URL() has not been implemented yet.\n";
 }
