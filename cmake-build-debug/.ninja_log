@@ -1,0 +1,20 @@
+# ninja log v6
+11	1747	1726985419681438530	util/CMakeFiles/util_debug.dir/address.cc.o	801db19aee05e471
+1748	4097	1726985421417443569	util/CMakeFiles/util_debug.dir/eventloop.cc.o	590a572e082f65a4
+4097	5582	1726985423765450273	util/CMakeFiles/util_debug.dir/file_descriptor.cc.o	547fb4a0deee6199
+5582	6984	1726985425253454454	util/CMakeFiles/util_debug.dir/ipv4_header.cc.o	537361af83bdf94f
+6984	8714	1726985426653458341	util/CMakeFiles/util_debug.dir/random.cc.o	479de262afcabe67
+8714	10465	1726985428385463088	util/CMakeFiles/util_debug.dir/socket.cc.o	2bb501e40ab48c70
+10465	11619	1726985430133467812	util/CMakeFiles/util_debug.dir/tun.cc.o	ac5ecd2d3c22e581
+11620	12222	1726985431289470898	src/CMakeFiles/minnow_debug.dir/byte_stream.cc.o	23113cc3eea16e68
+12222	12901	1726985431893472500	src/CMakeFiles/minnow_debug.dir/byte_stream_helpers.cc.o	2379431a50730bd7
+12901	16156	1726985432569474280	apps/CMakeFiles/stream_copy.dir/bidirectional_stream_copy.cc.o	713ef95e7839f837
+16156	17004	1726985435825482728	util/libutil_debug.a	f02f39cac28fbc9f
+17005	17128	1726985436673484889	src/libminnow_debug.a	8d291837ec24a51b
+17128	17259	1726985436797485205	apps/libstream_copy.a	ad852040f35c365f
+17259	18963	1726985436929485540	apps/CMakeFiles/webget.dir/webget.cc.o	bca1401182c6500a
+18964	19122	1726985438633489830	apps/webget	c8418c952424b240
+43	2520	1727007520582682779	apps/CMakeFiles/webget.dir/webget.cc.o	bca1401182c6500a
+2520	2713	1727007523058697840	apps/webget	c8418c952424b240
+111	1736	1727007720323869685	apps/CMakeFiles/webget.dir/webget.cc.o	bca1401182c6500a
+1736	1878	1727007721947879129	apps/webget	c8418c952424b240
