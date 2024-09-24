@@ -10,13 +10,13 @@ using namespace std;
 void get_URL( const string& host, const string& path )
 {
   Address target_addr(host, "http");
-  TCPSocket socket;
-  socket.connect(target_addr);
+  TCPSocket socket0;
+  socket0.connect(target_addr);
   string request = "GET " + path + " HTTP/1.1\r\n";
   request += "Host: " + host + "\r\n";
   request += "Connection: close\r\n";
   request += "\r\n";
-  socket.write(request);
+  socket0.write(request);
   //response = socket.recv(4096);
   string req;
  /* while (true) {
@@ -27,10 +27,13 @@ void get_URL( const string& host, const string& path )
      // req[x] = '\0';
       cout << req;
   }*/
-  socket.read(req);
-  cout << req;
-  cerr << "Function called: get_URL(" << host << ", " << path << ")\n";
-  cerr << "Warning: get_URL() has not been implemented yet.\n";
+  while (!socket0.eof()){
+        socket0.read(req);
+        cout << req;
+  }
+  socket0.close();
+ // cerr << "Function called: get_URL(" << host << ", " << path << ")\n";
+ // cerr << "Warning: get_URL() has not been implemented yet.\n";
 }
 
 int main( int argc, char* argv[] )
