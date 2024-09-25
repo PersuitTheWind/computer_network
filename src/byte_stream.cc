@@ -1,5 +1,4 @@
 #include "byte_stream.hh"
-
 using namespace std;
 
 ByteStream::ByteStream( uint64_t capacity ) : capacity_( capacity ) {}
@@ -11,10 +10,11 @@ bool Writer::is_closed() const
 
 void Writer::push( string data )
 {
-  if (is_closed()) return;
+  if ( is_closed() )
+    return;
   uint64_t s = available_capacity();
-  uint64_t x = min (s , data.size());
-  buffer_.append(data,substr(0,x));
+  uint64_t x = min( s, data.size() );
+  buffer_.append( data.substr( 0, x ) );
   push_num += x;
   // Your code here.
   //(void)data;
@@ -48,17 +48,17 @@ uint64_t Reader::bytes_popped() const
 
 string_view Reader::peek() const
 {
-  return string_view(buffer_);
+  return string_view( buffer_ );
 }
 
 void Reader::pop( uint64_t len )
 {
-  uint_64 x = min(len, buffer_.size());
-  buffer.erase(0,x);
+  uint64_t x = min( len, buffer_.size() );
+  buffer_.erase( 0, x );
   pop_num += x;
 }
 
 uint64_t Reader::bytes_buffered() const
 {
-   return buffer_.size();
+  return buffer_.size();
 }
