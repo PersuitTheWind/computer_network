@@ -10,9 +10,8 @@ bool Writer::is_closed() const
 
 void Writer::push( string data )
 {
-  if ( is_closed() )
-    return;
   uint64_t s = available_capacity();
+  if ( is_closed() || s <= 0 ) return;
   uint64_t x = min( s, data.size() );
   buffer_.append( data.substr( 0, x ) );
   push_num += x;
@@ -48,7 +47,7 @@ uint64_t Reader::bytes_popped() const
 
 string_view Reader::peek() const
 {
-  return string_view( buffer_ );
+  return buffer_;
 }
 
 void Reader::pop( uint64_t len )
