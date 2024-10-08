@@ -11,22 +11,29 @@ void Reassembler::insert( uint64_t first_index, string data, bool is_last_substr
      end_of_a_bytestream ( is_last_substring );
      return;
   }
-  if ( first_index <= first_unassembled_index()){
+  if ( st <= first_unassembled_index()){
      data1 = data1.substr(first_unassembled_index() - first_index);
      st = first_unassembled_index();
   }
-  if ( last_index >= first_unacceptable_index()){
+  if ( ed >= first_unacceptable_index()){
      data1 = data1.substr( 0 ,data1.length() - ( last_index - first_unacceptable_index() ) );
      ed = first_unacceptable_index()；
   }
-  bytes_pending_ += data1.length();
   
+  if (st > first_unassembled_index()){
+     
+  
+     end_of_a_bytestream ( is_last_substring );
+  }
+  else output_.writer().push( data1 );
+  check_buffer();
+  end_of_a_bytestream ( is_last_substring );
 }
 
 uint64_t Reassembler::bytes_pending() const
 {
   // Your code here.
-  return bytes_pending_ ;
+  return ;
 }
 uint64_t first_unassembled_index(){
   return output_.writer().bytes_pushed();
