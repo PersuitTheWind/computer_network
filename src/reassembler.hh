@@ -42,4 +42,8 @@ public:
 
 private:
   ByteStream output_; // the Reassembler writes to this ByteStream
+  uint64_t bytes_pending_{0};
+  uint64_t first_unassembled_index();
+  uint64_t first_unacceptable_index();
+  void end_of_a_bytestream(bool is_last_substring);
 };
