@@ -1,7 +1,7 @@
 #pragma once
-
+#include <map>
 #include "byte_stream.hh"
-
+#include <string>
 class Reassembler
 {
 public:
@@ -45,5 +45,6 @@ private:
   uint64_t first_unassembled_index();
   uint64_t first_unacceptable_index();
   std::map <uint64_t,string> buffer_;
+  void check_buffer();
   void end_of_a_bytestream(bool is_last_substring);
 };
