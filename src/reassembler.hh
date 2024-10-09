@@ -42,9 +42,10 @@ public:
 
 private:
   ByteStream output_ ; // the Reassembler writes to this ByteStream
+  uint64_t ed_index{UINT64_MAX};
   uint64_t first_unassembled_index();
   uint64_t first_unacceptable_index();
   std::map <uint64_t,std::string> buffer_ {};
   void check_buffer();
-  void end_of_a_bytestream(bool is_last_substring);
+  void end_of_a_bytestream();
 };

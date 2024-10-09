@@ -6,9 +6,11 @@ void Reassembler::insert( uint64_t first_index, string data, bool is_last_substr
 {
   uint64_t last_index = first_index + data.length() ;
   uint64_t st = first_index , ed = last_index ;
+  if (is_last_substring) ed_index = ed;
+  if (first_unassembled_index() == ed_index ) { output_.writer().close(); return; }
   std::string data1 = data;
   if (last_index <= first_unassembled_index() || first_index >= first_unacceptable_index() || data.empty() ) {
-     end_of_a_bytestream ( is_last_substring );
+     end_of_a_bytestream ();
      return;
   }
   if ( st <= first_unassembled_index()){
@@ -29,7 +31,7 @@ void Reassembler::insert( uint64_t first_index, string data, bool is_last_substr
         if(ed0 >= st + 1){
            if(ed0 < ed) data1 = data1.substr(ed0 - st + 1);
            else {
-              end_of_a_bytestream ( is_last_substring );
+              end_of_a_bytestream ( );
               return;
            }
            data1 = it -> second + data1;
@@ -47,11 +49,12 @@ void Reassembler::insert( uint64_t first_index, string data, bool is_last_substr
         }
      }
      buffer_.insert({ st , data1});    
-     end_of_a_bytestream ( is_last_substring );
+     end_of_a_bytestream ();
+     return;
   }
   else output_.writer().push( data1 );
   check_buffer();
-  end_of_a_bytestream ( is_last_substring );
+  end_of_a_bytestream ();
 }
 
 uint64_t Reassembler::bytes_pending() const
@@ -78,6 +81,6 @@ void Reassembler::check_buffer(){
           it = buffer_.erase(it);
     }         
 }
-void Reassembler::end_of_a_bytestream(bool is_last_substring){
-  if (is_last_substring) output_.writer().close();
+void Reassembler::end_of_a_bytestream(){
+  if (buffer_.empty() && first_unassembled_index() == ed_index ) output_.writer().close();
 }
