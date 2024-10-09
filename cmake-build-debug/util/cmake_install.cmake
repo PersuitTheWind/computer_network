@@ -1,4 +1,4 @@
-# Install script for directory: /home/sx/minnow/util
+# Install script for directory: /home/sx/computer_network/util
 
 # Set the install prefix
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)

@@ -1,4 +1,4 @@
-# Install script for directory: /home/sx/minnow
+# Install script for directory: /home/sx/computer_network
 
 # Set the install prefix
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)
@@ -44,22 +44,22 @@ endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("/home/sx/minnow/cmake-build-debug/util/cmake_install.cmake")
+  include("/home/sx/computer_network/cmake-build-debug/util/cmake_install.cmake")
 endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("/home/sx/minnow/cmake-build-debug/src/cmake_install.cmake")
+  include("/home/sx/computer_network/cmake-build-debug/src/cmake_install.cmake")
 endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("/home/sx/minnow/cmake-build-debug/tests/cmake_install.cmake")
+  include("/home/sx/computer_network/cmake-build-debug/tests/cmake_install.cmake")
 endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("/home/sx/minnow/cmake-build-debug/apps/cmake_install.cmake")
+  include("/home/sx/computer_network/cmake-build-debug/apps/cmake_install.cmake")
 endif()
 
 if(CMAKE_INSTALL_COMPONENT)
@@ -70,5 +70,5 @@ endif()
 
 string(REPLACE ";" "\n" CMAKE_INSTALL_MANIFEST_CONTENT
        "${CMAKE_INSTALL_MANIFEST_FILES}")
-file(WRITE "/home/sx/minnow/cmake-build-debug/${CMAKE_INSTALL_MANIFEST}"
+file(WRITE "/home/sx/computer_network/cmake-build-debug/${CMAKE_INSTALL_MANIFEST}"
      "${CMAKE_INSTALL_MANIFEST_CONTENT}")

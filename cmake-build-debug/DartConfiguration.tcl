@@ -4,8 +4,8 @@
 
 
 # Configuration directories and files
-SourceDirectory: /home/sx/minnow
-BuildDirectory: /home/sx/minnow/cmake-build-debug
+SourceDirectory: /home/sx/computer_network
+BuildDirectory: /home/sx/computer_network/cmake-build-debug
 
 # Where to place the cost data store
 CostDataFile: 
@@ -27,7 +27,7 @@ SubmitInactivityTimeout:
 NightlyStartTime: 00:00:00 EDT
 
 # Commands for the build/test/submit cycle
-ConfigureCommand: "/snap/clion/296/bin/cmake/linux/x64/bin/cmake" "/home/sx/minnow"
+ConfigureCommand: "/snap/clion/296/bin/cmake/linux/x64/bin/cmake" "/home/sx/computer_network"
 MakeCommand: /snap/clion/296/bin/cmake/linux/x64/bin/cmake --build . --config "${CTEST_CONFIGURATION_TYPE}"
 DefaultCTestConfigurationType: Release
 

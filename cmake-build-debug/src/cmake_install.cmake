@@ -1,4 +1,4 @@
-# Install script for directory: /home/sx/minnow/src
+# Install script for directory: /home/sx/computer_network/src
 
 # Set the install prefix
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)

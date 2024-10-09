@@ -41,10 +41,10 @@ public:
   const Writer& writer() const { return output_.writer(); }
 
 private:
-  ByteStream output_; // the Reassembler writes to this ByteStream
+  ByteStream output_ ; // the Reassembler writes to this ByteStream
   uint64_t first_unassembled_index();
   uint64_t first_unacceptable_index();
-  std::map <uint64_t,string> buffer_;
+  std::map <uint64_t,std::string> buffer_ {};
   void check_buffer();
   void end_of_a_bytestream(bool is_last_substring);
 };
