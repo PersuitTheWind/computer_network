@@ -1,7 +1,9 @@
 #pragma once
 
 #include <queue>
-
+#include <map>
+#include <vector>
+#include <string>
 #include "address.hh"
 #include "ethernet_frame.hh"
 #include "ipv4_datagram.hh"
@@ -68,7 +70,7 @@ public:
 private:
   // Human-readable name of the interface
   std::string name_;
-
+  EthernetFrame make_frame(const EthernetAddress& dst, uint16_t type,std::vector <std::string> payload);
   // The physical output port (+ a helper function `transmit` that uses it to send an Ethernet frame)
   std::shared_ptr<OutputPort> port_;
   void transmit( const EthernetFrame& frame ) const { port_->transmit( *this, frame ); }
@@ -81,4 +83,14 @@ private:
 
   // Datagrams that have been received
   std::queue<InternetDatagram> datagrams_received_ {};
+  
+  uint64_t Time{0};
+  
+  std::map<uint32_t, uint64_t> req_time{};
+  
+  std::map<uint32_t, std::pair<EthernetAddress, uint64_t>> addr_cache{};
+  
+  std::deque<std::pair<uint32_t, InternetDatagram>> queueing_dgrams{};
+  
+  
 };
