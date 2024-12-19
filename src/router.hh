@@ -2,7 +2,8 @@
 
 #include <memory>
 #include <optional>
-#include <map>
+#include <unordered_map>
+
 #include "exception.hh"
 #include "network_interface.hh"
 
@@ -38,7 +39,7 @@ private:
   
   struct route_information{
          uint8_t prefix_length{0};
-         std::optional<Address> next_hop{};
+         std::optional<Address> next_hop{std::nullopt};
          size_t interface_num{0}; 
   }; 
  
