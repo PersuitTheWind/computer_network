@@ -27,6 +27,6 @@ public:
 
 private:
   Reassembler reassembler_;
-  Wrap32 SYN_seqno{0};
-  bool has_received_syn{false},is_fin{false};
+  std::optional<Wrap32> _seqno { std::nullopt };
+  bool _syn { false }, _fin { false };
 };

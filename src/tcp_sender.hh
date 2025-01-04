@@ -11,31 +11,42 @@
 #include <optional>
 #include <queue>
 
-class retransmission_timer{
-   private: 
-      uint64_t time{0};
-      bool Condition{false};
-   public:
-      retransmission_timer(uint64_t RTO = 0): time(RTO), Condition(false){}
-      void reset(uint64_t RTO){
-           time = RTO;
-           Condition = true;
-      }
-      bool is_timeout(uint64_t ms_since_last_tick,uint64_t current_RTO_ms_ ){
-          time += ms_since_last_tick;
-          return Condition && (time >= current_RTO_ms_);
-      }
-      bool is_open() const{return Condition;}
-      void close(){ Condition = false; }
+class Timer
+{
+private:
+  size_t _current_time { 0 };
+  size_t _current_tout { 0 };
+  bool status { false };
+
+public:
+  void shutdown()
+  {
+    _current_time = 0;
+    _current_tout = 0;
+    status = false;
+  }
+  void start( unsigned int timeout )
+  {
+    status = true;
+    _current_time = 0;
+    _current_tout = timeout;
+  }
+  void update( size_t uptime )
+  {
+    if ( !status )
+      return;
+    _current_time += uptime;
+  }
+  bool trip() { return status && ( _current_time >= _current_tout ); }
+  bool state() { return status; }
 };
-   
 
 class TCPSender
 {
 public:
-  /* default Retransmission Timeout and possible ISN */
+  /* Construct TCP sender with given default Retransmission Timeout and possible ISN */
   TCPSender( ByteStream&& input, Wrap32 isn, uint64_t initial_RTO_ms )
-    : input_( std::move( input ) ), isn_( isn ), initial_RTO_ms_( initial_RTO_ms ),current_RTO_ms_( initial_RTO_ms )
+    : input_( std::move( input ) ), isn_( isn ), initial_RTO_ms_( initial_RTO_ms )
   {}
 
   /* Generate an empty TCPSenderMessage */
@@ -67,15 +78,15 @@ private:
   ByteStream input_;
   Wrap32 isn_;
   uint64_t initial_RTO_ms_;
-  // new variables
-  uint64_t current_RTO_ms_;
-  Wrap32 Last_sent {Wrap32(0)};
-  uint64_t last_ackno {0};
-  bool SYN_sent{false};
-  uint64_t receiver_window_size{1};
-  std::deque<TCPSenderMessage> queue_message {};
-  uint64_t consecutive_retransmissions_ {0};
-  retransmission_timer Timer{0};
-  bool is_finish{false};
-  
+  std::vector<TCPSenderMessage> _retrans_buf {};
+
+  unsigned int _retrans_cnt { 0 };
+
+  uint64_t _next_seqno { 0 };
+  uint32_t _window_size { 1 };
+
+  bool _syn_sent { false };
+  bool _fin_sent { false };
+
+  Timer _timer {};
 };

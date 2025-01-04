@@ -1,94 +1,89 @@
 #include "reassembler.hh"
+#include <cassert>
 
 using namespace std;
 
+#define first_unassembled_index ( output_.writer().bytes_pushed() )
+#define first_unacceptable_index ( output_.writer().bytes_pushed() + output_.writer().available_capacity() )
+
 void Reassembler::insert( uint64_t first_index, string data, bool is_last_substring )
 {
-  uint64_t last_index = first_index + data.length() ;
-  uint64_t st = first_index , ed = last_index ;
-  if (is_last_substring) ed_index = ed;
-  if (first_unassembled_index() == ed_index ) { output_.writer().close(); return; }
-  std::string data1 = data;
-  if (last_index < first_unassembled_index() || first_index >= first_unacceptable_index() || data.empty() ) {
-    // end_of_a_bytestream ();
-     return;
+  // mark the _eof_index
+  if ( is_last_substring ) {
+    _eof_index = first_index + data.length();
+    if ( _eof_index == first_unassembled_index ) {
+      output_.writer().close();
+      return;
+    }
   }
-  if ( st <= first_unassembled_index()){
-     data1 = data1.substr(first_unassembled_index() - first_index);
-     st = first_unassembled_index();
+  // ignore the unvalid input.
+  if ( data.empty() || first_index >= first_unacceptable_index ) {
+    return;
   }
-  if ( ed > first_unacceptable_index()){
-     data1 = data1.substr( 0 ,first_unacceptable_index() - st );
-     ed = st + data1.length();
-  }
-  
-  if (st > first_unassembled_index()){
-     if (! buffer_.empty()){
-        auto it = buffer_.upper_bound (st);
-        if (it != buffer_.begin()) it--;
-        uint64_t st0 = it -> first;
-        uint64_t ed0 = st0 + it -> second.length();
-        if(st0 <= st && ed0 >= st){
-           if(ed0 < ed) data1 = data1.substr(ed0 - st);
-           else {
-              end_of_a_bytestream ( );
-              return;
-           }
-           data1 = it -> second + data1;
-           st = it -> first;
-           it = buffer_ . erase(it);
-        }
-        it = buffer_.upper_bound (st);
-        while(it != buffer_.end()){
-            if ( ed < it -> first ) break;
-            if ( ed <= it -> first + it -> second.length()){
-                data1 += it->second.substr(ed - it -> first);
-                ed = st + data1.length(); 
-            }
-            it = buffer_ . erase(it);
-        }
-     }
-     buffer_.insert({ st , data1});    
-     //end_of_a_bytestream ();
-     return;
-  }
-  else output_.writer().push( data1 );
-  check_buffer();
-  end_of_a_bytestream ();
-}
+  // the string should not be buffed by Reassembler.
+  if ( first_index <= first_unassembled_index ) {
+    // the string Reassembler received is already pushed into ByteStream.
+    // so just ignore it.
+    if ( first_index + data.length() < first_unassembled_index ) {
+      return;
+    }
+    // the string received has half pushed,
+    // so push the rest part of string first.
+    output_.writer().push( data.substr( first_unassembled_index - first_index ) );
 
+    // pending if any buffered string has being covered by the newest string.
+    auto it = _buf.begin();
+    while ( it != _buf.end() && it->first + it->second.length() <= first_unassembled_index ) {
+      it = _buf.erase( it );
+    }
+    // pending if any buffered string can be pushed into ByteStream.
+    if ( !_buf.empty() && _buf.begin()->first <= first_unassembled_index ) {
+      output_.writer().push( _buf.begin()->second.substr( first_unassembled_index - _buf.begin()->first ) );
+      _buf.erase( _buf.begin() );
+    }
+    // pending if output_ can be closed
+    if ( _buf.empty() && first_unassembled_index == _eof_index ) {
+      output_.writer().close();
+    }
+  }
+  // push the string to Reassembler's buf.
+  else {
+
+    // if the buf is empty, just add it in and return.
+    data = data.substr( 0, first_unacceptable_index - first_index );
+
+    auto it = _buf.lower_bound( first_index );
+    while ( it != _buf.end() ) {
+      // 判断是否可合并
+      if ( first_index + data.length() < it->first )
+        break;
+      // 判断是否完全覆盖
+      if ( first_index + data.length() <= it->first + it->second.length() ) {
+        data += it->second.substr( first_index + data.length() - it->first );
+      }
+      it = _buf.erase( it );
+    }
+    auto result = _buf.insert( { first_index, data } );
+    it = result.first;
+    // 可能向前合并
+    if ( it != _buf.begin() ) {
+      auto prev = std::prev( it );
+      // 判断是否重叠
+      if ( prev->first + prev->second.length() >= it->first ) {
+        // 判断是否完全覆盖
+        if ( prev->first + prev->second.length() <= it->first + it->second.length() ) {
+          prev->second += it->second.substr( prev->first + prev->second.length() - it->first );
+        }
+        _buf.erase( it );
+      }
+    }
+  }
+}
 uint64_t Reassembler::bytes_pending() const
 {
-  uint64_t ans = 0;
-  for ( auto &it : buffer_ )
-     ans += it.second.length();
+  size_t ans = 0;
+  for ( const auto& entry : _buf ) {
+    ans += entry.second.length();
+  }
   return ans;
-}
-uint64_t Reassembler::first_unassembled_index(){
-  return output_.writer().bytes_pushed();
-}
-uint64_t Reassembler::first_unacceptable_index(){
-  return output_.writer().bytes_pushed() + output_.writer().available_capacity();
-}
-void Reassembler::check_buffer(){
-    auto it  = buffer_.begin();
-    while( it != buffer_.end() && it -> first <= first_unassembled_index()){
-          if ( it -> first + it -> second.length() >= first_unassembled_index()){
-               std::string ss = it -> second ;
-               ss = ss.substr(first_unassembled_index() - it -> first);
-               output_.writer().push(ss);
-          }
-      
-          it = buffer_.erase(it);
-    }       
-    it = buffer_.begin();
-    if (!buffer_.empty() && it -> first <= first_unassembled_index() ){
-       std::string ss = it -> second ;
-       ss = ss.substr(first_unassembled_index() - it -> first);
-       output_.writer().push(ss);
-       buffer_.erase ( buffer_.begin());
-    }
-}
-void Reassembler::end_of_a_bytestream(){
-  if (buffer_.empty() && first_unassembled_index() == ed_index ) output_.writer().close();
 }

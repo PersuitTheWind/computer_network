@@ -20,38 +20,42 @@ void Router::add_route( const uint32_t route_prefix,
        << static_cast<int>( prefix_length ) << " => " << ( next_hop.has_value() ? next_hop->ip() : "(direct)" )
        << " on interface " << interface_num << "\n";
 
-  uint32_t r= route_prefix & (prefix_length ? 0xffffffff << (32 - prefix_length) : 0 ) ; 
-  auto i = _route_table.find(r);
-  if(i == _route_table.end() || i ->second.prefix_length <= prefix_length )
-      _route_table[r] = {prefix_length , next_hop , interface_num};
+  // Your code here.
+ uint32_t dst = route_prefix & (prefix_length ? 0xffffffff << (32 - prefix_length) : 0);
+    auto it = _route_table.find(dst);
+    if (it == _route_table.end() || it->second.prefix_len <= prefix_length) {
+        _route_table[dst] = {prefix_length, interface_num, next_hop};
+    }
 }
 
 void Router::route_one_datagram(InternetDatagram &dgram) {
-    const auto dst_ip_addr = dgram.header.dst;
-    auto end_it  = _route_table.end();
-    for(auto i = _route_table.begin() ; i != _route_table.end() ; ++i ){
-        if ( i -> second.prefix_length == 0 || (((i -> first) ^ dst_ip_addr) >> (32 - (i -> second.prefix_length))) == 0 ){
-            if ( end_it == _route_table.end() || i -> second.prefix_length > end_it->second.prefix_length )
-                  end_it = i ;          
-          }
+    // Your code here.
+    const auto dst_ip = dgram.header.dst;
+  auto result_it = _route_table.end();
+  for ( auto it = _route_table.begin(); it != _route_table.end(); ++it ) {
+    if ( it->second.prefix_len == 0 || ( ( it->first ^ dst_ip ) >> ( 32 - it->second.prefix_len ) ) == 0 ) {
+      if ( result_it == _route_table.end() || it->second.prefix_len > result_it->second.prefix_len )
+        result_it = it;
     }
-    if (end_it != _route_table.end() && dgram.header.ttl > 1){
-        --dgram.header.ttl;
-        dgram.header.compute_checksum();
-        auto it = interface (end_it -> second.interface_num);
-        it -> send_datagram (dgram , end_it -> second.next_hop.value_or ( Address::from_ipv4_numeric(dst_ip_addr)));
-    }
-    
+  }
+
+  if ( result_it != _route_table.end() && dgram.header.ttl > 1 ) {
+    --dgram.header.ttl;
+    dgram.header.compute_checksum();
+    auto next_interface = interface(result_it->second.interface_num);
+    next_interface->send_datagram( dgram, result_it->second.next_hop.value_or( Address::from_ipv4_numeric( dst_ip ) ) );
+  }
 }
 
 // Go through all the interfaces, and route every incoming datagram to its proper outgoing interface.
 void Router::route()
 {
-  for (auto &i : _interfaces) {
-     auto &q = i -> datagrams_received();
-     while( ! q.empty() ){
-         route_one_datagram( q.front() );
-         q.pop();
-     }
-  }
+  // Your code here.
+  for (auto &interface : _interfaces) {
+        auto &queue = interface->datagrams_received();
+        while (! queue.empty()) {
+            route_one_datagram(queue.front());
+            queue.pop();
+        }
+    }
 }

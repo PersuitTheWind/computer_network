@@ -5,105 +5,102 @@ using namespace std;
 
 uint64_t TCPSender::sequence_numbers_in_flight() const
 {
-  uint64_t s = 0;
-  if (queue_message.empty()) return 0;
-  for(auto i : queue_message)
-     s += i.sequence_length();
-  return s;
+  // Your code here.
+  uint64_t ret = 0;
+  for ( auto& seg : _retrans_buf ) {
+    ret += seg.sequence_length();
+  }
+  return ret;
 }
 
 uint64_t TCPSender::consecutive_retransmissions() const
 {
-  return consecutive_retransmissions_;
+  // Your code here.
+  return _retrans_cnt;
 }
 
 void TCPSender::push( const TransmitFunction& transmit )
 {
-  if (is_finish) return;
-  uint64_t seg_size = TCPConfig::MAX_PAYLOAD_SIZE;
-  uint64_t w = receiver_window_size ; 
-  if (w == 0) w = 1;
-  if (seg_size + input_.reader().bytes_popped() > w + last_ackno - 1 ) 
-      seg_size = w + last_ackno - 1 - input_.reader().bytes_popped() ;
-  if (seg_size > writer().bytes_pushed() - input_.reader().bytes_popped())
-      seg_size =  writer().bytes_pushed() - input_.reader().bytes_popped();
-  TCPSenderMessage m;
-  uint64_t s = seg_size ;
-  if( !SYN_sent ){
-     m.SYN = true ;
-     m.seqno = isn_;
-     s++;
+  // Your code here.
+  size_t remain_size = ( _window_size == 0 ) ? 1 : _window_size;
+  uint64_t tmp_size = sequence_numbers_in_flight();
+  if ( remain_size <= tmp_size )
+    return;
+  remain_size -= tmp_size;
+  while ( remain_size > 0 ) {
+    TCPSenderMessage seg;
+    seg.RST = input_.has_error();
+    if ( !_syn_sent ) {
+      _syn_sent = true;
+      seg.SYN = true;
+      remain_size--;
+    }
+    seg.seqno = seg.seqno.wrap( _next_seqno, isn_ );
+    string buf;
+    read( input_.reader(), min( remain_size, TCPConfig::MAX_PAYLOAD_SIZE ), buf );
+    remain_size -= buf.size();
+    seg.payload = move( buf );
+    if ( !_fin_sent && remain_size > 0 && reader().is_finished() ) {
+      remain_size--;
+      _fin_sent = true;
+      seg.FIN = true;
+    }
+    if ( seg.sequence_length() == 0 )
+      break;
+    _retrans_buf.emplace_back( seg );
+    transmit( seg );
+    _next_seqno += seg.sequence_length();
   }
-  else{
-     m.SYN = false;
-     m.seqno = Last_sent + static_cast<uint32_t> (1);
-  }
-  if (writer().is_closed() && input_.reader().bytes_popped() + seg_size == writer().bytes_pushed() && s + input_.reader().bytes_popped() < w + last_ackno - 1 ){
-     m.FIN = true;
-     is_finish = true;
-     s++;
-  }
-  else m.FIN = false;
-  Last_sent = m.seqno + static_cast<uint32_t> (s - 1);
-  if(writer().has_error()) m.RST = true;
-  if (s == 0) return;
-  SYN_sent = true;
-  m.payload = reader().peek().substr(0,s);
-  input_.reader().pop(s);
-  transmit(m);
-  queue_message.push_back(m);
-  if( !Timer.is_open() ) Timer.reset(0);
-  push(transmit);
+  if ( !_timer.state() && sequence_numbers_in_flight() != 0 )
+    _timer.start( initial_RTO_ms_ );
 }
 
 TCPSenderMessage TCPSender::make_empty_message() const
 {
-  TCPSenderMessage m;
-  if(!SYN_sent){
-     m.SYN = true;
-     m.seqno = isn_;
-  }
-  else {
-     m.SYN = false;
-     m.seqno = Last_sent + static_cast<uint32_t>(1);
-  }
-  if (writer().has_error()) m.RST = true;
-  m.payload = "";
-  return m;
+  // Your code here.
+  TCPSenderMessage msg = { .seqno = Wrap32::wrap( _next_seqno, isn_ ),
+                           .SYN = false,
+                           .payload = string(),
+                           .FIN = false,
+                           .RST = input_.has_error() };
+  return msg;
 }
 
 void TCPSender::receive( const TCPReceiverMessage& msg )
 {
-  if (msg.RST) {
-     writer().set_error();
-     return;
+  // Your code here.
+  _window_size = msg.window_size;
+  if ( msg.RST ) {
+    input_.set_error();
   }
-  if (reader().has_error()) return;
-  receiver_window_size = msg.window_size;
-  if (msg.ackno != std::nullopt){
-      uint64_t x = (*msg.ackno).unwrap(isn_,last_ackno) ;
-      if (last_ackno != x){
-         if(x > input_.reader().bytes_popped() + SYN_sent + is_finish) return;
-         last_ackno = x;
-         consecutive_retransmissions_ = 0;
-         current_RTO_ms_ = initial_RTO_ms_ ;
-         while( !queue_message.empty() && queue_message.front().seqno.unwrap(isn_,last_ackno)+ queue_message.front().sequence_length() <= last_ackno ) queue_message.pop_front();
-         if (queue_message.empty()) Timer.close();
-         else Timer.reset(0);
-      }
+  if ( msg.ackno.has_value() ) {
+    uint64_t ackno_seq = msg.ackno.value().unwrap( isn_, _next_seqno );
+    if ( ackno_seq > _next_seqno )
+      return; // TODO: Debug;
+    bool flag = false;
+    for ( auto it = _retrans_buf.begin(); it != _retrans_buf.end(); ) {
+      auto& seg = *it;
+      if ( seg.seqno.unwrap( isn_, _next_seqno ) + seg.sequence_length() <= ackno_seq ) {
+        it = _retrans_buf.erase( it );
+        flag = true;
+      } else
+        break;
+    }
+    if ( flag ) {
+      _timer.shutdown();
+      _retrans_cnt = 0;
+    }
   }
 }
 
 void TCPSender::tick( uint64_t ms_since_last_tick, const TransmitFunction& transmit )
 {
-  if (Timer.is_open())
-      if(Timer.is_timeout(ms_since_last_tick,current_RTO_ms_))
-        if (!queue_message.empty()){
-            transmit(queue_message.front());
-            if (receiver_window_size != 0){
-                consecutive_retransmissions_ ++;
-                current_RTO_ms_ *= 2;
-            }
-            Timer.reset(0);
-        }
+  // Your code here.
+  _timer.update( ms_since_last_tick );
+  if ( _timer.trip() ) {
+    transmit( _retrans_buf.front() );
+    if ( _window_size > 0 )
+      _retrans_cnt++; // why not back off? Another question: should the _retrans_cnt++ if win_size==0?
+    _timer.start( initial_RTO_ms_ << _retrans_cnt );
+  }
 }

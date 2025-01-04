@@ -2,20 +2,16 @@
 
 using namespace std;
 
-const uint64_t WRAP_LENGTH = 1ul << 32; 
-
 Wrap32 Wrap32::wrap( uint64_t n, Wrap32 zero_point )
 {
-  uint32_t nn = n;
-  return zero_point + nn;
+  // Your code here.
+  return Wrap32 { static_cast<uint32_t>( n + zero_point.raw_value_ ) };
 }
 
 uint64_t Wrap32::unwrap( Wrap32 zero_point, uint64_t checkpoint ) const
 {
-  uint32_t check_seq = wrap(checkpoint,zero_point).raw_value_;
-  int32_t distance = raw_value_ - check_seq; 
-  int64_t abs_seqno = checkpoint + distance ;
-  if  ( abs_seqno < 0 )
-      abs_seqno += WRAP_LENGTH;
-  return abs_seqno;
+  // Your code here.
+  int32_t tmp = raw_value_ - wrap( checkpoint, zero_point ).raw_value_;
+  int64_t ans = checkpoint + tmp;
+  return ans >= 0 ? ans : ( ans + ( 1ul << 32 ) );
 }
